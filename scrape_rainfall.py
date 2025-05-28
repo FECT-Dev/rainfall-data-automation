@@ -6,7 +6,7 @@ import pandas as pd
 import time
 import subprocess
 
-# Setup for GitHub Actions compatibility
+# ✅ Setup for GitHub Actions (headless browser)
 options = webdriver.ChromeOptions()
 options.add_argument("--headless")
 options.add_argument("--no-sandbox")
@@ -19,27 +19,27 @@ try:
     wait = WebDriverWait(driver, 90)
     print("✅ Page opened")
 
-    # Click the "3 Hourly Data" button
+    # 🔘 Click the "3 Hourly Data" button
     time.sleep(5)
-    all_buttons = driver.find_elements(By.TAG_NAME, "button")
-    for b in all_buttons:
-        print("🔘 Button found:", b.text)
-        if "3 Hourly Data" in b.text:
-            driver.execute_script("arguments[0].scrollIntoView(true);", b)
+    buttons = driver.find_elements(By.TAG_NAME, "button")
+    for btn in buttons:
+        print("🔘 Button found:", btn.text)
+        if "3 Hourly Data" in btn.text:
+            driver.execute_script("arguments[0].scrollIntoView(true);", btn)
             time.sleep(1)
-            b.click()
+            btn.click()
             print("✅ Clicked '3 Hourly Data'")
             break
     else:
         raise Exception("❌ '3 Hourly Data' button not found.")
 
-    # Wait and retry for table to load
+    # ⏳ Retry waiting for table data
     print("⏳ Waiting for table to appear...")
     table = None
-    for _ in range(10):  # Retry up to 10 times (~30 seconds)
+    for _ in range(10):  # Try for ~30 seconds
         try:
             table = driver.find_element(By.CSS_SELECTOR, "#tab-content table")
-            if table.is_displayed():
+            if table.is_displayed() and len(table.find_elements(By.TAG_NAME, "td")) > 0:
                 driver.execute_script("arguments[0].scrollIntoView(true);", table)
                 print("✅ Table found and ready")
                 break
@@ -50,15 +50,15 @@ try:
         driver.save_screenshot("table_not_found.png")
         raise Exception("❌ Table not found. Screenshot saved as table_not_found.png")
 
-    # Extract table rows
+    # 📥 Extract data from table
     rows = table.find_elements(By.CSS_SELECTOR, "tbody tr")
     data = []
     for row in rows:
         cols = row.find_elements(By.TAG_NAME, "td")
         if cols:
-            data.append([col.text for col in cols])
+            data.append([col.text.strip() for col in cols])
 
-    # Save to CSV
+    # 💾 Save to CSV
     if data:
         headers = ["Station_ID", "Station_Name", "Report_Time", "Rainfall (mm)", "Temperature (°C)", "RH (%)"]
         df = pd.DataFrame(data, columns=headers)
@@ -66,7 +66,7 @@ try:
         df.to_csv(filename, index=False)
         print(f"✅ CSV saved: {filename}")
 
-        # Git commit and push
+        # 🔁 Git commit and push
         try:
             subprocess.run(["git", "config", "--global", "user.email", "actions@github.com"], check=True)
             subprocess.run(["git", "config", "--global", "user.name", "GitHub Actions"], check=True)
@@ -78,7 +78,7 @@ try:
             print("❌ Git operation failed:", e)
 
     else:
-        print("⚠️ Table was found, but no data rows extracted.")
+        print("⚠️ Table found, but no data rows extracted.")
 
 finally:
     driver.quit()
