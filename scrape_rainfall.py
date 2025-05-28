@@ -4,22 +4,24 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 import time
-import subprocess  # ✅ For Git automation
+import subprocess  # For Git automation
 
-# Setup Chrome
+# ✅ Setup Chrome for headless (GitHub Actions compatible)
 options = webdriver.ChromeOptions()
-# options.add_argument("--headless")
+options.add_argument("--headless")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
 driver = webdriver.Chrome(options=options)
 
 try:
-    # Step 1: Open page
+    # Step 1: Open the webpage
     url = "https://meteo.gov.lk/index.php?option=com_content&view=article&id=104&Itemid=311&lang=en"
     driver.get(url)
     wait = WebDriverWait(driver, 60)
     print("✅ Page opened")
 
-    # Step 2: Click "3 Hourly Data"
-    time.sleep(5)
+    # Step 2: Click the "3 Hourly Data" button
+    time.sleep(5)  # Allow JS to render
     all_buttons = driver.find_elements(By.TAG_NAME, "button")
     for b in all_buttons:
         print("🔘 Button found:", b.text)
@@ -32,7 +34,7 @@ try:
     else:
         raise Exception("❌ '3 Hourly Data' button not found.")
 
-    # Step 3: Wait for at least one row with data
+    # Step 3: Wait for data table to load
     print("⏳ Waiting for table data...")
     wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "#tab-content table tbody tr td")))
     print("✅ Table loaded")
@@ -46,7 +48,7 @@ try:
         if cols:
             data.append([col.text for col in cols])
 
-    # Step 5: Save CSV
+    # Step 5: Save as CSV
     if data:
         headers = ["Station_ID", "Station_Name", "Report_Time", "Rainfall (mm)", "Temperature (°C)", "RH (%)"]
         df = pd.DataFrame(data, columns=headers)
@@ -56,6 +58,8 @@ try:
 
         # Step 6: Git commit and push
         try:
+            subprocess.run(["git", "config", "--global", "user.email", "actions@github.com"], check=True)
+            subprocess.run(["git", "config", "--global", "user.name", "GitHub Actions"], check=True)
             subprocess.run(["git", "add", filename], check=True)
             subprocess.run(["git", "commit", "-m", f"Add dataset: {filename}"], check=True)
             subprocess.run(["git", "push"], check=True)
