@@ -17,11 +17,11 @@ try:
     # Step 1: Open the webpage
     url = "https://meteo.gov.lk/index.php?option=com_content&view=article&id=104&Itemid=311&lang=en"
     driver.get(url)
-    wait = WebDriverWait(driver, 60)
+    wait = WebDriverWait(driver, 90)
     print("✅ Page opened")
 
     # Step 2: Click the "3 Hourly Data" button
-    time.sleep(5)  # Allow JS to render
+    time.sleep(5)  # Let JS render
     all_buttons = driver.find_elements(By.TAG_NAME, "button")
     for b in all_buttons:
         print("🔘 Button found:", b.text)
@@ -34,13 +34,16 @@ try:
     else:
         raise Exception("❌ '3 Hourly Data' button not found.")
 
-    # Step 3: Wait for data table to load
-    print("⏳ Waiting for table data...")
-    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "#tab-content table tbody tr td")))
-    print("✅ Table loaded")
+    # Step 3: Wait for table element (not rows) to appear
+    print("⏳ Waiting for table to appear...")
+    try:
+        table = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "#tab-content table")))
+        print("✅ Table found")
+    except:
+        driver.save_screenshot("table_not_found.png")
+        raise Exception("❌ Table not found. Screenshot saved as table_not_found.png")
 
-    # Step 4: Extract data
-    table = driver.find_element(By.CSS_SELECTOR, "#tab-content table")
+    # Step 4: Extract rows
     rows = table.find_elements(By.CSS_SELECTOR, "tbody tr")
     data = []
     for row in rows:
@@ -68,7 +71,7 @@ try:
             print("❌ Git operation failed:", e)
 
     else:
-        print("⚠️ Table was found, but no data rows extracted.")
+        print("⚠️ Table found, but no data rows extracted.")
 
 finally:
     driver.quit()
