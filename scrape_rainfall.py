@@ -4,6 +4,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 import time
+import subprocess  # ✅ For Git automation
 
 # Setup Chrome
 options = webdriver.ChromeOptions()
@@ -52,6 +53,16 @@ try:
         filename = f"3hourly_data_{int(time.time())}.csv"
         df.to_csv(filename, index=False)
         print(f"✅ CSV saved: {filename}")
+
+        # Step 6: Git commit and push
+        try:
+            subprocess.run(["git", "add", filename], check=True)
+            subprocess.run(["git", "commit", "-m", f"Add dataset: {filename}"], check=True)
+            subprocess.run(["git", "push"], check=True)
+            print("✅ CSV committed and pushed to GitHub")
+        except subprocess.CalledProcessError as e:
+            print("❌ Git operation failed:", e)
+
     else:
         print("⚠️ Table was found, but no data rows extracted.")
 
