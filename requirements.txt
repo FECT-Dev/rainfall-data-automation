@@ -1,2 +1,2 @@
-echo selenium > requirements.txt
-echo pandas >> requirements.txt
+selenium
+pandas
