@@ -33,7 +33,7 @@ try:
     else:
         raise Exception("❌ '3 Hourly Data' button not found.")
 
-    # ⏳ Retry waiting for table data
+    # ⏳ Wait for data to appear
     print("⏳ Waiting for table to appear...")
     table = None
     for _ in range(10):  # Try for ~30 seconds
@@ -50,7 +50,7 @@ try:
         driver.save_screenshot("table_not_found.png")
         raise Exception("❌ Table not found. Screenshot saved as table_not_found.png")
 
-    # 📥 Extract data from table
+    # 📥 Extract table data
     rows = table.find_elements(By.CSS_SELECTOR, "tbody tr")
     data = []
     for row in rows:
