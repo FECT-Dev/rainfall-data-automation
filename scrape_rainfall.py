@@ -5,37 +5,47 @@ from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 import time
 
+# Setup Chrome
 options = webdriver.ChromeOptions()
-# options.add_argument("--headless")  # Keep visible for debugging
+# options.add_argument("--headless")
 driver = webdriver.Chrome(options=options)
 
 try:
-    # Go directly to the 3 Hourly Data page
+    # Step 1: Open page
     url = "https://meteo.gov.lk/index.php?option=com_content&view=article&id=104&Itemid=311&lang=en"
     driver.get(url)
-    wait = WebDriverWait(driver, 30)
+    wait = WebDriverWait(driver, 60)
     print("✅ Page opened")
 
-    # ✅ Click the "Load Data" button
-    load_btn = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Load Data')]")))
-    load_btn.click()
-    print("✅ Clicked 'Load Data' button")
+    # Step 2: Click "3 Hourly Data"
+    time.sleep(5)
+    all_buttons = driver.find_elements(By.TAG_NAME, "button")
+    for b in all_buttons:
+        print("🔘 Button found:", b.text)
+        if "3 Hourly Data" in b.text:
+            driver.execute_script("arguments[0].scrollIntoView(true);", b)
+            time.sleep(1)
+            b.click()
+            print("✅ Clicked '3 Hourly Data'")
+            break
+    else:
+        raise Exception("❌ '3 Hourly Data' button not found.")
 
-    # ✅ Wait for the table data to load
+    # Step 3: Wait for at least one row with data
+    print("⏳ Waiting for table data...")
     wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "#tab-content table tbody tr td")))
-    print("✅ Table data detected")
+    print("✅ Table loaded")
 
-    # Scrape the table
+    # Step 4: Extract data
     table = driver.find_element(By.CSS_SELECTOR, "#tab-content table")
     rows = table.find_elements(By.CSS_SELECTOR, "tbody tr")
-
     data = []
     for row in rows:
         cols = row.find_elements(By.TAG_NAME, "td")
         if cols:
             data.append([col.text for col in cols])
 
-    # Save to CSV
+    # Step 5: Save CSV
     if data:
         headers = ["Station_ID", "Station_Name", "Report_Time", "Rainfall (mm)", "Temperature (°C)", "RH (%)"]
         df = pd.DataFrame(data, columns=headers)
@@ -43,7 +53,7 @@ try:
         df.to_csv(filename, index=False)
         print(f"✅ CSV saved: {filename}")
     else:
-        print("⚠️ No data rows found.")
+        print("⚠️ Table was found, but no data rows extracted.")
 
 finally:
     driver.quit()
