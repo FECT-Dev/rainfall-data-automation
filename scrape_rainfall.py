@@ -33,18 +33,20 @@ try:
     else:
         raise Exception("❌ '3 Hourly Data' button not found.")
 
-    # ⏳ Wait for data to appear
+    # ⏳ Retry waiting for the table to load
     print("⏳ Waiting for table to appear...")
     table = None
-    for _ in range(10):  # Try for ~30 seconds
+    for attempt in range(15):  # Try for ~45 seconds
         try:
             table = driver.find_element(By.CSS_SELECTOR, "#tab-content table")
-            if table.is_displayed() and len(table.find_elements(By.TAG_NAME, "td")) > 0:
+            cells = table.find_elements(By.TAG_NAME, "td")
+            if table.is_displayed() and len(cells) > 5:
                 driver.execute_script("arguments[0].scrollIntoView(true);", table)
-                print("✅ Table found and ready")
+                print("✅ Table found with data")
                 break
         except:
             pass
+        print(f"⏳ Retry {attempt + 1}/15...")
         time.sleep(3)
     else:
         driver.save_screenshot("table_not_found.png")
@@ -78,7 +80,7 @@ try:
             print("❌ Git operation failed:", e)
 
     else:
-        print("⚠️ Table found, but no data rows extracted.")
+        print("⚠️ Table loaded, but no data rows extracted.")
 
 finally:
     driver.quit()
