@@ -2,15 +2,15 @@ name: Run Rainfall Scraper Every 3 Hours
 
 on:
   schedule:
-    - cron: '0 */3 * * *'  # Every 3 hours
-  workflow_dispatch:       # Allow manual trigger from GitHub UI
+    - cron: '0 */3 * * *'  # ⏰ Run every 3 hours
+  workflow_dispatch:       # 🔘 Allow manual trigger from UI
 
 jobs:
   run-script:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout code
+      - name: 📥 Checkout repository
         uses: actions/checkout@v3
 
       - name: 🐍 Set up Python 3.12
@@ -18,17 +18,27 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: 📦 Install dependencies
+      - name: 📦 Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: 🧪 Run scraper script
-        run: python scrape_rainfall.py
-
-      - name: 🚀 Commit and push CSV
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
+          python scrape_rainfall.py
+        continue-on-error: true  # ✅ Allow next steps to run on failure
+
+      - name: 🚀 Commit and push CSV if new data exists
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
           git add *.csv || true
           git diff --cached --quiet || (git commit -m "🔄 Add latest rainfall data" && git push)
+        continue-on-error: true
+
+      - name: 📸 Upload screenshot if scraping failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-screenshot
+          path: table_not_found.png
