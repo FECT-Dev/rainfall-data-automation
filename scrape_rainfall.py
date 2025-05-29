@@ -5,6 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 import time
 import subprocess
+import os
 
 # ✅ Headless browser setup (for GitHub Actions)
 options = webdriver.ChromeOptions()
@@ -35,6 +36,7 @@ try:
     # ⏳ Retry loop for dynamic table content to load
     print("⏳ Waiting for table to load...")
     table = None
+    rows = []
     for attempt in range(20):  # Retry up to ~60s
         try:
             container = driver.find_element(By.ID, "tab-content")
@@ -42,7 +44,7 @@ try:
             rows = table.find_elements(By.CSS_SELECTOR, "tbody tr")
             if len(rows) > 0:
                 driver.execute_script("arguments[0].scrollIntoView(true);", table)
-                print("✅ Table found with data")
+                print(f"✅ Table found with {len(rows)} rows")
                 break
         except Exception:
             pass
@@ -77,7 +79,6 @@ try:
             print("✅ CSV committed and pushed to GitHub")
         except subprocess.CalledProcessError as e:
             print("❌ Git operation failed:", e)
-
     else:
         print("⚠️ Table was found, but no data rows extracted.")
 
