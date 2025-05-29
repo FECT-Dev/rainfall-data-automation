@@ -6,9 +6,9 @@ import pandas as pd
 import time
 import subprocess
 
-# ✅ Setup for GitHub Actions (headless browser)
+# ✅ Setup headless browser for GitHub Actions
 options = webdriver.ChromeOptions()
-options.add_argument("--headless")
+options.add_argument("--headless=new")  # More reliable rendering in new headless mode
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
 driver = webdriver.Chrome(options=options)
@@ -22,37 +22,40 @@ try:
     # 🔘 Click the "3 Hourly Data" button
     time.sleep(5)
     buttons = driver.find_elements(By.TAG_NAME, "button")
+    found = False
     for btn in buttons:
         print("🔘 Button found:", btn.text)
         if "3 Hourly Data" in btn.text:
             driver.execute_script("arguments[0].scrollIntoView(true);", btn)
             time.sleep(1)
             btn.click()
+            found = True
             print("✅ Clicked '3 Hourly Data'")
             break
-    else:
+    if not found:
         raise Exception("❌ '3 Hourly Data' button not found.")
 
-    # ⏳ Retry waiting for the table to load
+    # ⏳ Wait for table to appear
     print("⏳ Waiting for table to appear...")
     table = None
-    for attempt in range(15):  # Try for ~45 seconds
+    for attempt in range(20):  # Wait up to ~60s
         try:
-            table = driver.find_element(By.CSS_SELECTOR, "#tab-content table")
+            container = driver.find_element(By.ID, "tab-content")
+            table = container.find_element(By.TAG_NAME, "table")
             cells = table.find_elements(By.TAG_NAME, "td")
             if table.is_displayed() and len(cells) > 5:
                 driver.execute_script("arguments[0].scrollIntoView(true);", table)
                 print("✅ Table found with data")
                 break
-        except:
+        except Exception as e:
             pass
-        print(f"⏳ Retry {attempt + 1}/15...")
+        print(f"⏳ Retry {attempt + 1}/20...")
         time.sleep(3)
     else:
         driver.save_screenshot("table_not_found.png")
         raise Exception("❌ Table not found. Screenshot saved as table_not_found.png")
 
-    # 📥 Extract table data
+    # 📥 Extract data
     rows = table.find_elements(By.CSS_SELECTOR, "tbody tr")
     data = []
     for row in rows:
@@ -80,7 +83,7 @@ try:
             print("❌ Git operation failed:", e)
 
     else:
-        print("⚠️ Table loaded, but no data rows extracted.")
+        print("⚠️ Table found, but no data rows extracted.")
 
 finally:
     driver.quit()
