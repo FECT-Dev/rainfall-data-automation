@@ -8,7 +8,7 @@ import subprocess
 
 # ✅ Setup headless browser for GitHub Actions
 options = webdriver.ChromeOptions()
-options.add_argument("--headless=new")  # More reliable rendering in new headless mode
+options.add_argument("--headless=new")  # New headless mode
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
 driver = webdriver.Chrome(options=options)
@@ -35,10 +35,10 @@ try:
     if not found:
         raise Exception("❌ '3 Hourly Data' button not found.")
 
-    # ⏳ Wait for table to appear
+    # ⏳ Wait for the table to appear with data
     print("⏳ Waiting for table to appear...")
     table = None
-    for attempt in range(20):  # Wait up to ~60s
+    for attempt in range(20):  # Retry up to 60 seconds
         try:
             container = driver.find_element(By.ID, "tab-content")
             table = container.find_element(By.TAG_NAME, "table")
@@ -47,7 +47,7 @@ try:
                 driver.execute_script("arguments[0].scrollIntoView(true);", table)
                 print("✅ Table found with data")
                 break
-        except Exception as e:
+        except Exception:
             pass
         print(f"⏳ Retry {attempt + 1}/20...")
         time.sleep(3)
