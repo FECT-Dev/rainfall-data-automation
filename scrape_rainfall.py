@@ -51,10 +51,13 @@ try:
         print(f"⏳ Retry {attempt + 1}/20...")
         time.sleep(3)
     else:
+        with open("debug_page.html", "w", encoding="utf-8") as f:
+            f.write(driver.page_source)
         driver.save_screenshot("table_not_found.png")
-        raise Exception("❌ Table not found. Screenshot saved as table_not_found.png")
+        print("❌ Table not found. Screenshot and HTML saved.")
+        exit(0)  # Exit cleanly without error
 
-    # 📅 Extract table data
+    # 🗓 Extract table data
     data = []
     for row in rows:
         cols = row.find_elements(By.TAG_NAME, "td")
