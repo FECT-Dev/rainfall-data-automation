@@ -54,33 +54,30 @@ try:
         driver.save_screenshot("table_not_found.png")
         raise Exception("❌ Table not found. Screenshot saved as table_not_found.png")
 
-    # 📥 Extract table data
+    # 📅 Extract table data
     data = []
     for row in rows:
         cols = row.find_elements(By.TAG_NAME, "td")
         if cols:
             data.append([col.text.strip() for col in cols])
 
-    # 💾 Save data to CSV
-    if data:
-        headers = ["Station_ID", "Station_Name", "Report_Time", "Rainfall (mm)", "Temperature (°C)", "RH (%)"]
-        df = pd.DataFrame(data, columns=headers)
-        filename = f"3hourly_data_{int(time.time())}.csv"
-        df.to_csv(filename, index=False)
-        print(f"✅ CSV saved: {filename}")
+    # 📆 Save data to CSV (even if empty)
+    headers = ["Station_ID", "Station_Name", "Report_Time", "Rainfall (mm)", "Temperature (°C)", "RH (%)"]
+    df = pd.DataFrame(data, columns=headers)
+    filename = f"3hourly_data_{int(time.time())}.csv"
+    df.to_csv(filename, index=False)
+    print(f"📆 CSV saved: {filename} with {len(data)} rows")
 
-        # 🔁 Commit and push to GitHub
-        try:
-            subprocess.run(["git", "config", "--global", "user.email", "actions@github.com"], check=True)
-            subprocess.run(["git", "config", "--global", "user.name", "GitHub Actions"], check=True)
-            subprocess.run(["git", "add", filename], check=True)
-            subprocess.run(["git", "commit", "-m", f"Add dataset: {filename}"], check=True)
-            subprocess.run(["git", "push"], check=True)
-            print("✅ CSV committed and pushed to GitHub")
-        except subprocess.CalledProcessError as e:
-            print("❌ Git operation failed:", e)
-    else:
-        print("⚠️ Table was found, but no data rows extracted.")
+    # 📌 Commit and push to GitHub
+    try:
+        subprocess.run(["git", "config", "--global", "user.email", "actions@github.com"], check=True)
+        subprocess.run(["git", "config", "--global", "user.name", "GitHub Actions"], check=True)
+        subprocess.run(["git", "add", filename], check=True)
+        subprocess.run(["git", "commit", "-m", f"Add dataset: {filename}"], check=True)
+        subprocess.run(["git", "push"], check=True)
+        print("✅ CSV committed and pushed to GitHub")
+    except subprocess.CalledProcessError as e:
+        print("❌ Git operation failed:", e)
 
 finally:
     driver.quit()
