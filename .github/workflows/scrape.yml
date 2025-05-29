@@ -3,7 +3,7 @@ name: Run Rainfall Scraper Every 3 Hours
 on:
   schedule:
     - cron: '0 */3 * * *'  # ⏰ Run every 3 hours
-  workflow_dispatch:       # 🔘 Allow manual trigger from UI
+  workflow_dispatch:       # 🔘 Allow manual run from UI
 
 jobs:
   run-script:
@@ -26,7 +26,7 @@ jobs:
       - name: 🧪 Run scraper script
         run: |
           python scrape_rainfall.py
-        continue-on-error: true  # ✅ Allow next steps to run on failure
+        continue-on-error: true  # Allow commit step even if scraping failed
 
       - name: 🚀 Commit and push CSV if new data exists
         run: |
@@ -37,8 +37,15 @@ jobs:
         continue-on-error: true
 
       - name: 📸 Upload screenshot if scraping failed
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: failure-screenshot
           path: table_not_found.png
+
+      - name: 🧾 Upload debug HTML if available
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-html
+          path: debug_page.html
