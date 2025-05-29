@@ -8,7 +8,7 @@ import subprocess
 
 # ✅ Setup headless browser for GitHub Actions
 options = webdriver.ChromeOptions()
-options.add_argument("--headless=new")  # New headless mode
+options.add_argument("--headless=new")  # Use new headless mode for better rendering
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
 driver = webdriver.Chrome(options=options)
@@ -35,27 +35,18 @@ try:
     if not found:
         raise Exception("❌ '3 Hourly Data' button not found.")
 
-    # ⏳ Wait for the table to appear with data
+    # ⏳ Wait until table has actual data
     print("⏳ Waiting for table to appear...")
-    table = None
-    for attempt in range(20):  # Retry up to 60 seconds
-        try:
-            container = driver.find_element(By.ID, "tab-content")
-            table = container.find_element(By.TAG_NAME, "table")
-            cells = table.find_elements(By.TAG_NAME, "td")
-            if table.is_displayed() and len(cells) > 5:
-                driver.execute_script("arguments[0].scrollIntoView(true);", table)
-                print("✅ Table found with data")
-                break
-        except Exception:
-            pass
-        print(f"⏳ Retry {attempt + 1}/20...")
-        time.sleep(3)
-    else:
+    try:
+        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "#tab-content table tbody tr")))
+        table = driver.find_element(By.CSS_SELECTOR, "#tab-content table")
+        driver.execute_script("arguments[0].scrollIntoView(true);", table)
+        print("✅ Table found and ready")
+    except:
         driver.save_screenshot("table_not_found.png")
         raise Exception("❌ Table not found. Screenshot saved as table_not_found.png")
 
-    # 📥 Extract data
+    # 📥 Extract table data
     rows = table.find_elements(By.CSS_SELECTOR, "tbody tr")
     data = []
     for row in rows:
